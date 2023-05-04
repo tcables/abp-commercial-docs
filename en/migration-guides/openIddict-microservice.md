@@ -40,6 +40,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
 
   ```csharp
   using Volo.Abp.OpenIddict;
+  using Volo.Abp.Account.Web;
   ...
   typeof(AbpAccountPublicWebOpenIddictModule),
   ```
@@ -89,6 +90,8 @@ Use the `abp update` command to update your existing application. See [Upgrading
                   options.Audience = "AccountService";
               });
   ```
+  
+  `context.Services.AddAuthentication()` is still needed, but is added by the `ConfigureExternalProviders` within the module class.
 
 - In **MyApplicationAuthServerModule.cs** `OnApplicationInitialization` method **replace IdentityServer and JwtToken midware**:
 
@@ -113,23 +116,28 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   <PackageReference Include="Volo.Abp.PermissionManagement.Domain.IdentityServer" Version="6.0.*" />
   ```
-  with   
+  
+  with
+  
   ```csharp
   <PackageReference Include="Volo.Abp.PermissionManagement.Domain.OpenIddict" Version="6.0.*" />
   ```
-
-- In **MyApplicationDomainSharedModule.cs** replace usings and **module dependencies:**
+  
+- In **AdministrationServiceDomainModule.cs** replace usings and **module dependencies:**
 
   ```csharp
   using Volo.Abp.PermissionManagement.IdentityServer;
   ...
   typeof(AbpPermissionManagementDomainIdentityServerModule)
   ```
-  with 
+  
+  with
+  
   ```csharp
   using Volo.Abp.PermissionManagement.OpenIddict;
   ...
   typeof(AbpPermissionManagementDomainOpenIddictModule)
+  ```
 
 ### IdentityService Domain Shared Layer
 
@@ -145,12 +153,12 @@ Use the `abp update` command to update your existing application. See [Upgrading
   <PackageReference Include="Volo.Abp.OpenIddict.Domain.Shared" Version="6.0.*" />
   ```
 
-- In **MyApplicationDomainModule.cs** replace usings and **module dependencies**:
+- In **IdentityServiceDomainSharedModule.cs** replace usings and **module dependencies**:
 
   ```csharp
   using Volo.Abp.IdentityServer;
   ...
-  typeof(AbpIdentityServerDomainModule)
+  typeof(AbpIdentityServerDomainSharedModule)
   ```
 
   with 
@@ -158,12 +166,12 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.OpenIddict;
   ...
-  typeof(AbpOpenIddictDomainModule)
+  typeof(AbpOpenIddictDomainSharedModule)
   ```
 
 ### IdentityService Domain Layer
 
-- In **MyApplication.IdentityService.Application.Contracts.csproj** replace **project references**:
+- In **MyApplication.IdentityService.Domain.csproj** replace **project references**:
 
   ```csharp
   <PackageReference Include="Volo.Abp.IdentityServer.Domain" Version="6.0.*" />
@@ -180,15 +188,15 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.IdentityServer;
   ...
-  typeof(AbpIdentityServerDomainSharedModule)
+  typeof(AbpIdentityServerDomainModule)
   ```
-
+  
   with 
-
+  
   ```csharp
   using Volo.Abp.OpenIddict;
   ...
-  typeof(AbpOpenIddictDomainSharedModule)
+  typeof(AbpOpenIddictDomainModule)
   ```
 
 ### IdentityService Application.Contracts Layer
@@ -205,7 +213,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
   <PackageReference Include="Volo.Abp.OpenIddict.Pro.Application.Contracts" Version="6.0.*" />
   ```
   
-- In **IdentityServiceApplicationContractsModule.cs.cs** replace usings and **module dependencies**:
+- In **IdentityServiceApplicationContractsModule.cs** replace usings and **module dependencies**:
 
   ```csharp
   using Volo.Abp.IdentityServer;
@@ -265,12 +273,12 @@ Use the `abp update` command to update your existing application. See [Upgrading
   <PackageReference Include="Volo.Abp.OpenIddict.EntityFrameworkCore" Version="6.0.*" />
   ```
 
-- In **IdentityServiceEntityFrameworkCoreModule.cs.cs** replace usings and **module dependencies**:
+- In **IdentityServiceEntityFrameworkCoreModule.cs** replace usings and **module dependencies**:
 
   ```csharp
   using Volo.Abp.IdentityServer.EntityFrameworkCore;
   ...
-  typeof(AbpIdentityServerEntityFrameworkCoreModule),
+  typeof(AbpIdentityServerEntityFrameworkCoreModule)
   ```
 
   with 
@@ -278,34 +286,85 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.OpenIddict.EntityFrameworkCore;
   ...
-  typeof(AbpOpenIddictEntityFrameworkCoreModule),
+  typeof(AbpOpenIddictEntityFrameworkCoreModule)
   ```
 
-- In **IdentityServiceEntityFrameworkCoreModule.cs.cs** replace `AddAbpDbContext` **options**:
+- In **IdentityServiceEntityFrameworkCoreModule.cs** `ConfigureServices` method replace `AddAbpDbContext` **options**:
 
   ```csharp
   options.ReplaceDbContext<IIdentityServerDbContext>();
   ```
   
-  with 
+  with
   
   ```csharp
   options.ReplaceDbContext<IOpenIddictDbContext>();
   ```
   
-- In **IdentityServiceDbContext.cs** replace implemented **dbcontexts**:
+- In **IdentityServiceDbContext.cs** replace usings and implemented **dbcontexts**:
 
   ```csharp
+  using Volo.Abp.IdentityServer.ApiResources;
+  using Volo.Abp.IdentityServer.ApiScopes;
+  using Volo.Abp.IdentityServer.Clients;
+  using Volo.Abp.IdentityServer.Devices;
+  using Volo.Abp.IdentityServer.EntityFrameworkCore;
+  using Volo.Abp.IdentityServer.Grants;
+  using Volo.Abp.IdentityServer.IdentityResources;
+  ...
   public class IdentityServiceDbContext : AbpDbContext<IdentityServiceDbContext>, IIdentityDbContext, IIdentityServerDbContext
   ```
   
-  with 
+  with
   
   ```csharp
+  using Volo.Abp.OpenIddict.Applications;
+  using Volo.Abp.OpenIddict.Authorizations;
+  using Volo.Abp.OpenIddict.EntityFrameworkCore;
+  using Volo.Abp.OpenIddict.Scopes;
+  using Volo.Abp.OpenIddict.Tokens;
+  ...
   public class IdentityServiceDbContext : AbpDbContext<IdentityServiceDbContext>, IIdentityDbContext, IOpenIddictDbContext
   ```
   
-  Afterwards you should have the DbSets like below:
+  Replace the following DbSets:
+  
+  ```csharp
+  public DbSet<ApiResource> ApiResources { get; set; }
+  public DbSet<ApiResourceSecret> ApiResourceSecrets { get; set; }
+  public DbSet<ApiResourceClaim> ApiResourceClaims { get; set; }
+  public DbSet<ApiResourceScope> ApiResourceScopes { get; set; }
+  public DbSet<ApiResourceProperty> ApiResourceProperties { get; set; }
+  public DbSet<ApiScope> ApiScopes { get; set; }
+  public DbSet<ApiScopeClaim> ApiScopeClaims { get; set; }
+  public DbSet<ApiScopeProperty> ApiScopeProperties { get; set; }
+  public DbSet<IdentityResource> IdentityResources { get; set; }
+  public DbSet<IdentityResourceClaim> IdentityClaims { get; set; }
+  public DbSet<IdentityResourceProperty> IdentityResourceProperties { get; set; }
+  public DbSet<Client> Clients { get; set; }
+  public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
+  public DbSet<ClientRedirectUri> ClientRedirectUris { get; set; }
+  public DbSet<ClientPostLogoutRedirectUri> ClientPostLogoutRedirectUris { get; set; }
+  public DbSet<ClientScope> ClientScopes { get; set; }
+  public DbSet<ClientSecret> ClientSecrets { get; set; }
+  public DbSet<ClientClaim> ClientClaims { get; set; }
+  public DbSet<ClientIdPRestriction> ClientIdPRestrictions { get; set; }
+  public DbSet<ClientCorsOrigin> ClientCorsOrigins { get; set; }
+  public DbSet<ClientProperty> ClientProperties { get; set; }
+  public DbSet<PersistedGrant> PersistedGrants { get; set; }
+  public DbSet<DeviceFlowCodes> DeviceFlowCodes { get; set; }
+  ```
+  
+  with
+  
+  ```csharp
+  public DbSet<OpenIddictApplication> Applications { get; set; }
+  public DbSet<OpenIddictAuthorization> Authorizations { get; set; }
+  public DbSet<OpenIddictScope> Scopes { get; set; }
+  public DbSet<OpenIddictToken> Tokens { get; set; }
+  ```
+  
+  Afterwards the DbSets should look like the following:
   
   ```csharp
   public class IdentityServiceDbContext : AbpDbContext<IdentityServiceDbContext>, IIdentityDbContext, IOpenIddictDbContext
@@ -323,13 +382,9 @@ Use the `abp update` command to update your existing application. See [Upgrading
   }
   ```
   
-- In **IdentityServiceDbContext.cs** replace usings and **fluent api configurations**:
+- In **IdentityServiceDbContext.cs** `ConfigureServices` method replace **fluent api configurations**:
 
   ```csharp
-  using Volo.Abp.IdentityServer.EntityFrameworkCore;
-  ...
-  using Volo.Abp.OpenIddict.EntityFrameworkCore;
-  ...
   protected override void OnModelCreating(ModelBuilder builder)
   {
       base.OnModelCreating(builder);
@@ -343,8 +398,6 @@ Use the `abp update` command to update your existing application. See [Upgrading
   with 
 
   ```csharp
-  using Volo.Abp.OpenIddict.EntityFrameworkCore;
-  ...
   protected override void OnModelCreating(ModelBuilder builder)
   {
       base.OnModelCreating(builder);
@@ -376,7 +429,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.IdentityServer;
   ...
-  typeof(AbpIdentityServerHttpApiModule),
+  typeof(AbpIdentityServerHttpApiModule)
   ```
 
   with 
@@ -384,7 +437,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.OpenIddict;
   ...
-  typeof(AbpOpenIddictProHttpApiModule),
+  typeof(AbpOpenIddictProHttpApiModule)
   ```
 
 ### IdentityService HttpApi.Client Layer
@@ -406,7 +459,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.IdentityServer;
   ...
-  typeof(AbpIdentityServerHttpApiClientModule),
+  typeof(AbpIdentityServerHttpApiClientModule)
   ```
 
   with 
@@ -414,7 +467,7 @@ Use the `abp update` command to update your existing application. See [Upgrading
   ```csharp
   using Volo.Abp.OpenIddict;
   ...
-  typeof(AbpOpenIddictProHttpApiClientModule),
+  typeof(AbpOpenIddictProHttpApiClientModule)
   ```
 
 ### IdentityServer Data Seeder
@@ -533,3 +586,5 @@ To update the menu, navigate to **MyApplicationMenuContributor.cs** (or Navigati
 ## See Also
 
 * [ABP Version 6.0 Migration Guide](Abp-6_0.md)
+* [ABP Version 7.0 Migration Guide](Abp-7_0.md)
+* [ABP Version 7.2 Migration Guide](Abp-7_2.md)
