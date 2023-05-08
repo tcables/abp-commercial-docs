@@ -558,6 +558,28 @@ In `appsettings.json` replace **IdentityServer** section with **OpenIddict** and
               });
   ```
 
+### Web Gateway
+
+- In **ocelot.json** locate this specific **Identity Service** *ServiceKey* that contains `identity-server` in the *DownstreamPathTemplate* and *UpstreamPathTemplate* url:
+
+```json
+{
+    "ServiceKey": "Identity Service",
+    "DownstreamPathTemplate": "/api/identity-server/{everything}",
+    "DownstreamScheme": "http",
+    "DownstreamHostAndPorts": [
+        {
+            "Host": "localhost",
+            "Port": 44388
+        }
+    ],
+    "UpstreamPathTemplate": "/api/identity-server/{everything}",
+    "UpstreamHttpMethod": [ "Put", "Delete", "Get", "Post" ]
+},
+```
+
+Replace `"/api/identity-server/{everything}"` with `"/api/openiddict/{everything}"`
+
 ### Public Web Application
 
 In the AddAbpOpenIdConnect configuration options, update `options.Scope.Add("role");` to `options.Scope.Add("roles");`.
